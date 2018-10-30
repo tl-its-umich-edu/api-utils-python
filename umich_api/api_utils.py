@@ -1,13 +1,10 @@
 from ratelimit import limits, sleep_and_retry
-import requests, os
+import requests
 
-from dotenv import load_dotenv
-load_dotenv()
-
-class EsbUtil:
+class ApiUtil():
     access_token = ""
 
-    def __init__(self, base_url, client_id, client_secret, client_scope, limits_calls=1, limits_period=60):
+    def __init__(self, base_url, client_id, client_secret, client_scope, limits_calls=200, limits_period=60):
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
@@ -49,13 +46,3 @@ class EsbUtil:
                 self.access_token = resp.json().get('access_token')
         except (ValueError):
             print ("Error obtaining access token with credentials")
-
-url = os.getenv("url")
-id = os.getenv("id")
-secret = os.getenv("secret")
-scope = os.getenv("scope")
-
-esb = EsbUtil(url, id, secret, scope, limits_calls=1)
-esb.get_access_token()
-for i in range(0, 50):
-    esb.api_call("Curriculum/SOC/Terms")
