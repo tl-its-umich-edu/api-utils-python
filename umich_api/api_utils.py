@@ -1,5 +1,7 @@
 from ratelimit import limits, sleep_and_retry
-import requests
+import requests, logging
+
+log = logging.getLogger(__name__)
 
 class ApiUtil():
     access_token = ""
@@ -12,7 +14,7 @@ class ApiUtil():
         self.api_call = sleep_and_retry(limits(calls=limits_calls, period=limits_period)(self._api_call))
 
     def _api_call(self, api_call):
-        print ("api_call")
+        log.debug("api_call")
         if (not self.access_token):
             raise Exception("No access token yet, must call get_access_token first")
 
@@ -21,16 +23,17 @@ class ApiUtil():
             "Authorization" : f"Bearer {self.access_token}",
             "x-ibm-client-id" : self.client_id,
         }
+        log.info(headers)
         resp = requests.get(f"{self.base_url}/{api_call}", headers=headers)
         if (resp.ok):
-            print (resp.text)
+            log.debug(resp.text)
         else:
-            print (resp.status_code)
-            print (resp.text)
+            log.debug(resp.status_code)
+            log.debug(resp.text)
     
 
-    def get_access_token(self):
-        print ("get_access_token")
+    def get_access_token(self, token_url):
+        log.debug ("get_access_token")
         payload = {
             "grant_type" : "client_credentials",
             "client_id" : self.client_id,
@@ -40,9 +43,9 @@ class ApiUtil():
         headers = {
             "accept" : "application/json",
         }
-        resp = requests.post(f"{self.base_url}/aa/oauth2/token", data=payload, headers=headers)
+        resp = requests.post(f"{self.base_url}/{token_url}", data=payload, headers=headers)
         try:
             if (resp.ok):
                 self.access_token = resp.json().get('access_token')
         except (ValueError):
-            print ("Error obtaining access token with credentials")
+            log.error ("Error obtaining access token with credentials")
