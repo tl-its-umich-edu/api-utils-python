@@ -1,3 +1,9 @@
+# -*- coding: future_fstrings -*- 
+
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 from ratelimit import limits, sleep_and_retry
 import requests, logging, json, pkg_resources
 
@@ -6,7 +12,8 @@ log = logging.getLogger(__name__)
 class ApiUtil():
     access_token = ""
 
-    def __init__(self, base_url: str, client_id: str, client_secret: str, client_scope: str, api_json: str = None):
+    def __init__(self, base_url, client_id, client_secret, client_scope, api_json = None):
+        # type: (str, str, str, str, str) -> None
         """[Init method used to create an Api Class for making api calls]
         
         :param base_url: Base URL of the API service
@@ -38,11 +45,12 @@ class ApiUtil():
             api = apis.get(client_scope)
             self.token_url = api.get('token_url')
             self.api_call = sleep_and_retry(limits(calls=api.get('limits_calls'), period=api.get('limits_period'))(self._api_call))
-            self.get_access_token(self.token_url)
+            self.access_token = self.get_access_token(self.token_url)
         else: 
             raise Exception(f"Scope {client_scope} not in known API dict")
 
-    def _api_call(self, api_call:str, method:str="GET"):
+    def _api_call(self, api_call, method="GET"):
+        # type: (str, str) -> str
         """Calls the specified API with the optional method
         
         :param api_call: API to call on this application
@@ -74,7 +82,8 @@ class ApiUtil():
             log.debug(resp.status_code)
             log.debug(resp.text)
 
-    def get_access_token(self, token_url:str):
+    def get_access_token(self, token_url):
+        # type: (str) -> str
         """Retrieves an access token from the specified URL
         
         :param token_url: Full URL to retrieve access token
@@ -95,6 +104,6 @@ class ApiUtil():
         resp = requests.post(f"{self.base_url}/{token_url}", data=payload, headers=headers)
         try:
             if (resp.ok):
-                self.access_token = resp.json().get('access_token')
+                return resp.json().get('access_token')
         except (ValueError):
             log.error ("Error obtaining access token with credentials")
