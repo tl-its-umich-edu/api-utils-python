@@ -12,6 +12,7 @@ setup(
     license=open('LICENSE', 'r').read().strip(),
     package='umich_api',
     packages=['umich_api'],
+    package_data={'umich_api': ['apis.json']},
     install_requires=[
         'ratelimit>=2.2.0,<2.2.99',
         'requests>=2.20.0,<2.22.99',

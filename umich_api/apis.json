@@ -1,0 +1,17 @@
+{
+    "mcommunity": {
+        "token_url": "inst/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
+    },
+    "canvasreadonly": {
+        "token_url": "/aa/oauth2/token",
+        "limits_calls": 20000,
+        "limits_period": 1
+    },
+    "classschedule": {
+        "token_url": "aa/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
+    }
+}

@@ -9,11 +9,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 url = os.getenv("url")
-id = os.getenv("id")
+client_id = os.getenv("client_id")
 secret = os.getenv("secret")
 
-scope = "mcommunity"
-mcommunity_api = ApiUtil(url, id, secret, scope, limits_calls=200, limits_period=60)
-mcommunity_api.get_access_token("inst/oauth2/token")
+mcommunity_api = ApiUtil(url, client_id, secret, "mcommunity")
+
 uniqname = "uniqname"
 mcommunity_api.api_call(f"MCommunity/People/{uniqname}")
