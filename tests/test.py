@@ -4,7 +4,7 @@ from umich_api.api_utils import ApiUtil
 import logging, json, unittest, os
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(dotenv_path=".env")
 
 logging.basicConfig(level="WARNING")
 
