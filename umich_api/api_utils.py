@@ -57,6 +57,7 @@ class ApiUtil():
         :type api_call: str
         :param method: Which HTTP method to use, defaults to "GET"
         :param method: str, optional
+        :returns Requests object with response from API (or an Exception)
         :raises Exception: No Access Token
         """
 
@@ -69,7 +70,7 @@ class ApiUtil():
             "Authorization" : f"Bearer {self.access_token}",
             "x-ibm-client-id" : self.client_id,
         }
-        log.info(headers)
+        log.debug(headers)
         if method == "GET":
             resp = requests.get(f"{self.base_url}/{api_call}", headers=headers)
         # TODO Implement/Test other methods, currently all we are doing is GET
@@ -81,6 +82,7 @@ class ApiUtil():
         else:
             log.debug(resp.status_code)
             log.debug(resp.text)
+            return resp
 
     def get_access_token(self, token_url):
         # type: (str) -> str

@@ -19,6 +19,7 @@ setup(
         # For Python 2.7
         'future',
         'future-fstrings',
+        'python-dotenv==0.9.1',
     ],
     setup_requires=['setuptools_scm',],
     tests_require=[],
