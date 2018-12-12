@@ -20,6 +20,7 @@ setup(
         'future',
         'future-fstrings',
         'python-dotenv==0.9.1',
+        'autologging==1.2',
     ],
     setup_requires=['setuptools_scm',],
     tests_require=[],
