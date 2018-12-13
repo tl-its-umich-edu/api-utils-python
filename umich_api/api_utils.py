@@ -2,13 +2,19 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+
+from future.standard_library import install_aliases
+install_aliases()
+
 from builtins import *
-
 from ratelimit import limits, sleep_and_retry
-import requests, logging, json, pkg_resources
+from urllib.parse import urlparse
+from autologging import logged, traced
 
-log = logging.getLogger(__name__)
+import requests, json, pkg_resources
 
+@logged
+@traced
 class ApiUtil():
     access_token = ""
 
@@ -49,40 +55,53 @@ class ApiUtil():
         else: 
             raise Exception(f"Scope {client_scope} not in known API dict")
 
-    def _api_call(self, api_call, method="GET"):
-        # type: (str, str) -> str
+    def _api_call(self, api_call, method="GET", payload=None):
+        # type: (str, str, Dict[str, str]) -> requests.Response
         """Calls the specified API with the optional method
         
         :param api_call: API to call on this application
         :type api_call: str
-        :param method: Which HTTP method to use, defaults to "GET"
-        :param method: str, optional
+        :param method: Which HTTP method to use, defaults to "GET", optional
+        :type method: str
+        :param payload: Payload for POST/GET methods, optional
+        :type payload: Dict[str, str]  
         :returns Requests object with response from API (or an Exception)
         :raises Exception: No Access Token
         """
-
-        log.debug("api_call")
-        if (not self.access_token):
-            raise Exception("No access token yet, must call get_access_token first")
 
         headers = {
             "accept" : "application/json",
             "Authorization" : f"Bearer {self.access_token}",
             "x-ibm-client-id" : self.client_id,
         }
-        log.debug(headers)
+        self.__log.debug(headers)
+        api_url = f"{self.base_url}/{api_call}"
+
+        self.__log.debug(f"Calling {api_url} with method {method}")
         if method == "GET":
-            resp = requests.get(f"{self.base_url}/{api_call}", headers=headers)
-        # TODO Implement/Test other methods, currently all we are doing is GET
+            resp = requests.get(api_url, headers=headers)
+        elif method == "POST":
+            resp = requests.post(api_url, headers=header, data=payload)
+        elif method == "PUT":
+            resp = requests.put(api_url, headers=header, data=payload)
+        elif method == "DELETE":
+            resp = requests.delete(api_url, headers=headers)
+        elif method == "HEAD":
+            resp = requests.head(api_url, headers=headers)
+        elif method == "OPTIONS":
+            resp = requests.options(api_url, headers=headers)
         else:
-            raise Exception("Methods other than GET are currently unsupported")
+            raise Exception(f"The method {method} is unsupported")
             
         if (resp.ok):
             return resp
         else:
-            log.debug(resp.status_code)
-            log.debug(resp.text)
+            self.__log.debug(resp.status_code)
+            self.__log.debug(resp.text)
             return resp
+
+    def get_pagination_query(self, headers):
+        return None
 
     def get_access_token(self, token_url):
         # type: (str) -> str
@@ -92,8 +111,6 @@ class ApiUtil():
         :type token_url: str
         """
 
-        
-        log.debug ("get_access_token")
         payload = {
             "grant_type" : "client_credentials",
             "client_id" : self.client_id,
@@ -108,4 +125,4 @@ class ApiUtil():
             if (resp.ok):
                 return resp.json().get('access_token')
         except (ValueError):
-            log.error ("Error obtaining access token with credentials")
+            self.__log.error ("Error obtaining access token with credentials")
