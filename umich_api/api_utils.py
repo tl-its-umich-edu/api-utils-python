@@ -116,11 +116,8 @@ class ApiUtil():
     def get_next_page(self, response):
         if not 'next' in response.links:
             return None
-        try:
-            self.__log.debug(response.links)
-            return parse_qs(urlparse(response.links['next']['url']).query)
-        except:
-            raise
+        self.__log.debug(response.links)
+        return parse_qs(urlparse(response.links['next']['url']).query)
 
     def get_access_token(self, token_url, client_scope):
         # type: (str) -> str
