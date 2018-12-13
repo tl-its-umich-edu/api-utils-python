@@ -17,20 +17,19 @@ class TestApiCalls(unittest.TestCase):
         self.url = os.getenv("url")
         self.client_id = os.getenv("client_id")
         self.secret = os.getenv("secret")
-        self.canvas_api = ApiUtil(self.url, self.client_id, self.secret, "canvasreadonly")
-        self.mcommunity_api = ApiUtil(self.url, self.client_id, self.secret, "mcommunity")
+        self.apiutil = ApiUtil(self.url, self.client_id, self.secret)
         print ("URL is %s" % self.url)
 
     def test_mcommunity(self):
         uniqname = "uniqname"
-        self.assertEqual(self.mcommunity_api.api_call(f"MCommunity/People/{uniqname}").status_code, 200)
+        self.assertEqual(self.apiutil.api_call(f"MCommunity/People/{uniqname}", "mcommunity").status_code, 200)
 
     def test_pagination(self):
-        resp = self.canvas_api.api_call(f"aa/CanvasReadOnly/courses/1/users")
+        resp = self.apiutil.api_call(f"aa/CanvasReadOnly/courses/1/users",'canvasreadonly')
         logger.info(resp.headers)
 
     def test_canvasreadonly(self):
-        resp = self.canvas_api.api_call(f"aa/CanvasReadOnly/brand_variables")
+        resp = self.apiutil.api_call(f"aa/CanvasReadOnly/brand_variables",'canvasreadonly')
         self.assertEqual(resp.status_code, 200)
 
 if __name__ == '__main__':
