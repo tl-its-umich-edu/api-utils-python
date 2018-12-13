@@ -79,6 +79,7 @@ class ApiUtil():
         self.__log.debug(headers)
         api_url = f"{self.base_url}/{api_call}"
 
+        self.__log.debug(f"Calling {api_url} with method {method}")
         if method == "GET":
             resp = requests.get(api_url, headers=headers)
         elif method == "POST":
