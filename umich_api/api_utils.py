@@ -13,8 +13,6 @@ from autologging import logged, traced
 
 import requests, json, pkg_resources
 
-from typing import Dict
-
 @logged
 @traced
 class ApiUtil():

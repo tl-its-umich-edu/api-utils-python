@@ -4,11 +4,11 @@ from umich_api.api_utils import ApiUtil
 import logging, json, unittest, os
 
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=os.path.dirname(__file__)+"/.env")
-
-logging.basicConfig(level="TRACE")
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level="TRACE")
+
+load_dotenv(dotenv_path=os.path.dirname(os.path.abspath(__file__))+"/.env")
 
 class TestApiCalls(unittest.TestCase):
 
