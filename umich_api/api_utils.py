@@ -11,6 +11,7 @@ install_aliases()
 from builtins import *
 from ratelimit import limits, sleep_and_retry
 from urllib.parse import urlparse, parse_qs
+from datetime import datetime, timedelta
 
 from autologging import logged, traced
 
@@ -43,6 +44,8 @@ class ApiUtil():
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
+        # This line is needed so pylint doesn't complain about this variable not existing.
+        self.__log = self.__log
 
         # If the user doesn't pass an alternate API file use the included one
         if not api_json:
@@ -51,15 +54,19 @@ class ApiUtil():
         with open(api_json, encoding='utf-8') as api_file:
             apis = json.loads(api_file.read())
 
+        # Create a dict to hold details of scopes (from json)
         self.scopes = defaultdict(dict)
+        # Create a dict to cache the tokens
+        self.tokens = defaultdict(dict)
+
         # Setup all of the calls to the apis with the limits
         for (client_scope, api) in viewitems(apis): 
             self.scopes[client_scope]["api_call"] = sleep_and_retry(limits(calls=api.get('limits_calls'), period=api.get('limits_period'))(self._api_call))
-            # Each client_scope seems to need it's own access token. Just get them all here first
-            if "access_token" not in self.scopes[client_scope]:
-                self.scopes[client_scope]["access_token"] = self.get_access_token(api.get('token_url'), client_scope)
+            # Store the token url associated with this client scope for later
+            self.scopes[client_scope]["token_url"] = api.get('token_url')
 
     def api_call(self, api_call, client_scope, method="GET", payload=None):
+        # type: (str, str, Dict[str, str], str, str) -> requests.Response
         """Calls the specified API with the optional method
         
         :param api_call: API to call on this application
@@ -75,10 +82,11 @@ class ApiUtil():
         :returns Requests object with response from API (or an Exception)
         :raises Exception: No Access Token
         """
-        return self.scopes[client_scope]["api_call"](api_call, self.scopes[client_scope]["access_token"], method, payload)
+        this_scope = self.scopes.get(client_scope)
+        return this_scope.get("api_call")(api_call, self.get_access_token(this_scope.get("token_url"), client_scope), method, payload)
 
     def _api_call(self, api_call, access_token, method="GET", payload=None):
-        # type: (str, str, Dict[str, str]) -> requests.Response
+        # type: (str, str, Dict[str, str], str, str) -> requests.Response
         """ Internal method for making api calls 
         """
 
@@ -114,21 +122,44 @@ class ApiUtil():
             return resp
 
     def get_next_page(self, response):
+        #type: requests.Response -> Dict
         if not 'next' in response.links:
             return None
         self.__log.debug(response.links)
         return parse_qs(urlparse(response.links['next']['url']).query)
 
     def get_access_token(self, token_url, client_scope):
-        # type: (str) -> str
-        """Retrieves an access token from the specified URL
-        
+        # type: (str, str) -> str
+        """Retrieves access token from the local tokens dictionary
+           If it's expired it will attempt to renew it
         :param token_url: Full URL to retrieve access token
         :type token_url: str
         :param client_scope: Client scope to retrieve this token for
         :type client_scope: str
+        :returns Access token str
         """
+        
+        return self.get_oauth_token(token_url, client_scope).get("access_token")
 
+    def get_oauth_token(self, token_url, client_scope):
+        # type: (str, str) -> Dict
+        """Retrieves an access token from the specified URL, also caches the token in self.tokens dict
+        :param token_url: Full URL to retrieve access token
+        :type token_url: str
+        :param client_scope: Client scope to retrieve this token for
+        :type client_scope: str
+        :returns Dict (from json) generated from the response containing token information
+        """
+        if client_scope in self.tokens:
+            cached_token = self.tokens.get(client_scope)
+            # Check expires_time, if this is valid just return the token other-wise renew it
+            if (datetime.now() < cached_token.get("expires_at")):
+                # Not expired return the token, otherwise continue on
+                return cached_token
+            else:
+                self.__log.debug("Token expired, renewing token")
+
+        # Otherwise we have to retrieve it
         payload = {
             "grant_type" : "client_credentials",
             "client_id" : self.client_id,
@@ -141,6 +172,12 @@ class ApiUtil():
         resp = requests.post(f"{self.base_url}/{token_url}", data=payload, headers=headers)
         try:
             if (resp.ok):
-                return resp.json().get('access_token')
+                r_json = resp.json()
+                # If expires_at is a parameter on the return, add the value to "now" and store it as a new value expires_time
+                if 'expires_at' in r_json:
+                    r_json['expires_time'] = datetime.now() + timedelta(seconds=r_json['expires_at'])
+                # Cache the token
+                self.tokens[token_url] = r_json
+                return r_json
         except (ValueError):
             self.__log.error ("Error obtaining access token with credentials")
