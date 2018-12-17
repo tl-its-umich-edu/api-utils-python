@@ -81,9 +81,9 @@ class ApiUtil():
         if method == "GET":
             resp = requests.get(api_url, headers=headers)
         elif method == "POST":
-            resp = requests.post(api_url, headers=header, data=payload)
+            resp = requests.post(api_url, headers=headers, data=payload)
         elif method == "PUT":
-            resp = requests.put(api_url, headers=header, data=payload)
+            resp = requests.put(api_url, headers=headers, data=payload)
         elif method == "DELETE":
             resp = requests.delete(api_url, headers=headers)
         elif method == "HEAD":
