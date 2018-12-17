@@ -10,7 +10,7 @@ install_aliases()
 
 from builtins import *
 from ratelimit import limits, sleep_and_retry
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 from autologging import logged, traced
 
@@ -59,7 +59,6 @@ class ApiUtil():
             if "access_token" not in self.scopes[client_scope]:
                 self.scopes[client_scope]["access_token"] = self.get_access_token(api.get('token_url'), client_scope)
 
-
     def api_call(self, api_call, client_scope, method="GET", payload=None):
         """Calls the specified API with the optional method
         
@@ -69,7 +68,9 @@ class ApiUtil():
         :type client_scope: str
         :param method: Which HTTP method to use, defaults to "GET", optional
         :type method: str
-        :param payload: Payload for POST/GET methods, optional
+        :param query: Optional query parameter to make against the API call
+        :type method: str
+        :param payload: Payload for POST/GET methods, optional. Can be a query parameter for next page!
         :type payload: Dict[str, str]  
         :returns Requests object with response from API (or an Exception)
         :raises Exception: No Access Token
@@ -91,7 +92,7 @@ class ApiUtil():
 
         self.__log.debug(f"Calling {api_url} with method {method}")
         if method == "GET":
-            resp = requests.get(api_url, headers=headers)
+            resp = requests.get(api_url, headers=headers, params=payload)
         elif method == "POST":
             resp = requests.post(api_url, headers=headers, data=payload)
         elif method == "PUT":
@@ -112,8 +113,11 @@ class ApiUtil():
             self.__log.debug(resp.text)
             return resp
 
-    def get_pagination_query(self, headers):
-        return None
+    def get_next_page(self, response):
+        if not 'next' in response.links:
+            return None
+        self.__log.debug(response.links)
+        return parse_qs(urlparse(response.links['next']['url']).query)
 
     def get_access_token(self, token_url, client_scope):
         # type: (str) -> str
