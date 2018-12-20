@@ -37,14 +37,17 @@ class TestApiCalls(unittest.TestCase):
     def test_token_renewal(self):
         uniqname = "uniqname"
         client_scope = "mcommunity"
-        api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
+        with self.assertLogs(level="INFO") as cm:
+            api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
+        # Asserts that it gets a token, need to match the substring against all output. It will contain a time
+        self.assertTrue(any(f'INFO:umich_api.api_utils.ApiUtil:The token for {client_scope} will expire at' for elem in cm.output))
         self.assertEqual(api_result.status_code, 200)
         # Expire the token, verify this still works by checking the debug messages
-        self.apiutil.tokens[client_scope]['expires_at'] = datetime.now()
-        with self.assertLogs(level="DEBUG") as cm:
+        self.apiutil.tokens[client_scope]['expires_time'] = datetime.now()
+        with self.assertLogs(level="INFO") as cm:
             api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
         # This is the message that the token was renewed
-        self.assertIn('DEBUG:umich_api.api_utils.ApiUtil:Token expired, renewing token', cm.output)
+        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {client_scope} expired, renewing token', cm.output)
         # Assert this api resulted in 200
         self.assertEqual(api_result.status_code, 200)
 

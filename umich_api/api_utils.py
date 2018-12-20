@@ -152,8 +152,8 @@ class ApiUtil():
         """
         if client_scope in self.tokens:
             cached_token = self.tokens.get(client_scope)
-            # Check expires_time, if this is valid just return the token other-wise renew it
-            if (datetime.now() < cached_token.get("expires_at")):
+            # Check expires_time, if this is valid just return the token other-wise renew it, have a fallback incase this cam't be looked up
+            if (datetime.now() < cached_token.get("expires_time", datetime.min)):
                 # Not expired return the token, otherwise continue on
                 return cached_token
             else:
@@ -173,11 +173,14 @@ class ApiUtil():
         try:
             if (resp.ok):
                 r_json = resp.json()
-                # If expires_at is a parameter on the return, add the value to "now" and store it as a new value expires_time
-                if 'expires_at' in r_json:
-                    r_json['expires_time'] = datetime.now() + timedelta(seconds=r_json['expires_at'])
+                # If expires_in is a parameter on the return, add the value to "now" and store it as a new value expires_time
+                if 'expires_in' in r_json:
+                    expires_time = datetime.now() + timedelta(seconds=r_json['expires_in'])
+                    r_json['expires_time'] = expires_time
+                    self.__log.info(f"The token for {client_scope} will expire at {expires_time}")
                 # Cache the token
                 self.tokens[token_url] = r_json
                 return r_json
         except (ValueError):
-            self.__log.error ("Error obtaining access token with credentials")
+            self.__log.error (f"Error obtaining access token for {client_scope} {token_url}")
+
