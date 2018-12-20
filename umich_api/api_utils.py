@@ -157,7 +157,7 @@ class ApiUtil():
                 # Not expired return the token, otherwise continue on
                 return cached_token
             else:
-                self.__log.debug("Token expired, renewing token")
+                self.__log.info(f"Token for {client_scope} expired, renewing token")
 
         # Otherwise we have to retrieve it
         payload = {
