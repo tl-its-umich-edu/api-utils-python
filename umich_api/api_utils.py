@@ -90,6 +90,9 @@ class ApiUtil():
         """ Internal method for making api calls 
         """
 
+        if access_token is None
+            raise Exception("Must obtain an access token before making API Call")
+
         headers = {
             "accept" : "application/json",
             "Authorization" : f"Bearer {access_token}",
@@ -170,17 +173,18 @@ class ApiUtil():
             "accept" : "application/json",
         }
         resp = requests.post(f"{self.base_url}/{token_url}", data=payload, headers=headers)
-        try:
-            if (resp.ok):
-                r_json = resp.json()
-                # If expires_in is a parameter on the return, add the value to "now" and store it as a new value expires_time
-                if 'expires_in' in r_json:
-                    expires_time = datetime.now() + timedelta(seconds=r_json['expires_in'])
-                    r_json['expires_time'] = expires_time
-                    self.__log.info(f"The token for {client_scope} will expire at {expires_time}")
-                # Cache the token
-                self.tokens[token_url] = r_json
-                return r_json
-        except (ValueError):
-            self.__log.error (f"Error obtaining access token for {client_scope} {token_url}")
+        if (resp.ok):
+            r_json = resp.json()
+            # If expires_in is a parameter on the return, add the value to "now" and store it as a new value expires_time
+            if 'expires_in' in r_json:
+                expires_time = datetime.now() + timedelta(seconds=r_json['expires_in'])
+                r_json['expires_time'] = expires_time
+                self.__log.info(f"The token for {client_scope} will expire at {expires_time}")
+            # Cache the token
+            self.tokens[token_url] = r_json
+            return r_json
+        else:
+            self.__log.warn(f"Token generation failed with code {resp.status_code}")
+            self.__log.debug(resp.text)
+            return None
 
