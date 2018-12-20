@@ -90,7 +90,7 @@ class ApiUtil():
         """ Internal method for making api calls 
         """
 
-        if access_token is None
+        if access_token is None:
             raise Exception("Must obtain an access token before making API Call")
 
         headers = {
