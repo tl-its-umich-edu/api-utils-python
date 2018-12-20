@@ -122,7 +122,7 @@ class ApiUtil():
             return resp
 
     def get_next_page(self, response):
-        #type: requests.Response -> Dict
+        #type: (requests.Response) -> Dict
         if not 'next' in response.links:
             return None
         self.__log.debug(response.links)
