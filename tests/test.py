@@ -14,20 +14,20 @@ sys.path.insert(0, this_dir + "/..")
 from umich_api.api_utils import ApiUtil
 
 load_dotenv(dotenv_path=this_dir + "/.env")
-logging.basicConfig(level=os.getenv("log_level", "DEBUG"))
+logging.basicConfig(level=os.getenv("log_level", "TRACE"))
 
 @logged
 class TestApiCalls(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.url = os.getenv("url")
-        self.client_id = os.getenv("client_id")
-        self.secret = os.getenv("secret")
-        self.apiutil = ApiUtil(self.url, self.client_id, self.secret)
+    def setUpClass(cls):
+        cls.url = os.getenv("url")
+        cls.client_id = os.getenv("client_id")
+        cls.secret = os.getenv("secret")
+        cls.apiutil = ApiUtil(cls.url, cls.client_id, cls.secret)
         # This line is needed so pylint doesn't complain about this variable not existing.
-        self.__log = self.__log
-        self.__log.info("URL is %s" % self.url)
+        cls.__log = cls.__log
+        cls.__log.info("URL is %s" % cls.url)
 
     # Tests API mcommunity calls
     def test_mcommunity(self):
@@ -37,17 +37,15 @@ class TestApiCalls(unittest.TestCase):
     def test_token_renewal(self):
         uniqname = "uniqname"
         client_scope = "mcommunity"
-        with self.assertLogs(level="INFO") as cm:
-            api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
-        # Asserts that it gets a token, need to match the substring against all output. It will contain a time
-        self.assertTrue(any(f'INFO:umich_api.api_utils.ApiUtil:The token for {client_scope} will expire at' for elem in cm.output))
+        token_url = self.apiutil.scopes.get(client_scope, {}).get("token_url")
+        api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
         self.assertEqual(api_result.status_code, 200)
         # Expire the token, verify this still works by checking the debug messages
-        self.apiutil.tokens[client_scope]['expires_time'] = datetime.now()
+        self.assertTrue(self.apiutil.expire_token(client_scope=client_scope))
         with self.assertLogs(level="INFO") as cm:
             api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
         # This is the message that the token was renewed
-        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {client_scope} expired, renewing token', cm.output)
+        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {token_url} expired, renewing token', cm.output)
         # Assert this api resulted in 200
         self.assertEqual(api_result.status_code, 200)
 

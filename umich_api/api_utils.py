@@ -26,7 +26,7 @@ class ApiUtil():
         Must init with the appropriate values
     """
 
-    def __init__(self, base_url, client_id, client_secret, api_json = None):
+    def __init__(self, base_url, client_id, client_secret, api_json = None, token_expires_percent=5):
         # type: (str, str, str, str, str) -> None
         """[Init method used to create an Api Class for making api calls]
         
@@ -38,12 +38,17 @@ class ApiUtil():
         :type client_secret: str
         :param api_json: API file defining all JSON limits and calls, defaults to None because it will use the default
         :type api_json: str, optional
+        :param token_expires_percent: This is a percentage of time to take off the token renewal to ensure it doesn't run out. For instance 5(%) of 3600 is 180. 
+        :type token_expires_percent: int, optional
         :raises Exception: If this cannot be configured with parameters used
+        :raises AttributeError: If the apis.json file is empty
         """
 
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
+        self.token_expires_percent = int(100-token_expires_percent)/100
+
         # This line is needed so pylint doesn't complain about this variable not existing.
         self.__log = self.__log
 
@@ -53,6 +58,10 @@ class ApiUtil():
 
         with open(api_json, encoding='utf-8') as api_file:
             apis = json.loads(api_file.read())
+        
+        # If the string is empty
+        if not apis:
+            raise AttributeError("fFile {api_file} loaded is empty")
 
         # Create a dict to hold details of scopes (from json)
         self.scopes = defaultdict(dict)
@@ -140,9 +149,31 @@ class ApiUtil():
         :param client_scope: Client scope to retrieve this token for
         :type client_scope: str
         :returns Access token str
+        :raises AttributeError If the oauth token could not be found
         """
+        token = self.get_oauth_token(token_url, client_scope)
+        if token is None:
+            raise AttributeError(f"Could not find oauth token for {token_url} {client_scope}")
+        return token.get("access_token")
+
+    def expire_token(self, token_url=None, client_scope=None):
+        """ Expires the token, given the token_url or the scope. For the scope it will expire all the tokens if given
         
-        return self.get_oauth_token(token_url, client_scope).get("access_token")
+        :param token_url: Token URL to expire
+        :type token_url: str
+        :param client_scope: Client scope to expire, will expire all tokens that use this 
+        :type client_scope: str 
+        :returns True if the token could be expired, False if there was some problem with the parameters or finding the token
+        """
+        # Try to get the tokenurl from the api for the client scope
+        if token_url is None:
+           token_url = self.scopes.get(client_scope, {}).get("token_url")
+
+        if token_url in self.tokens:
+            self.tokens[token_url]["expires_time"] = datetime.now()
+            self.__log.info(f"Token {token_url} has been expired")
+            return True
+        return False
 
     def get_oauth_token(self, token_url, client_scope):
         # type: (str, str) -> Dict
@@ -153,14 +184,17 @@ class ApiUtil():
         :type client_scope: str
         :returns Dict (from json) generated from the response containing token information
         """
-        if client_scope in self.tokens:
-            cached_token = self.tokens.get(client_scope)
+        if token_url in self.tokens:
+            cached_token = self.tokens.get(token_url)
             # Check expires_time, if this is valid just return the token other-wise renew it, have a fallback incase this cam't be looked up
-            if (datetime.now() < cached_token.get("expires_time", datetime.min)):
+            token_expire_time = cached_token.get("expires_time", datetime.min)
+            self.__log.debug(f"Now is {datetime.now()} token expires in {token_expire_time}")
+            if (datetime.now() < token_expire_time):
                 # Not expired return the token, otherwise continue on
+                self.__log.debug(f"Token for {token_url} found and valid, returning cached token")
                 return cached_token
             else:
-                self.__log.info(f"Token for {client_scope} expired, renewing token")
+                self.__log.info(f"Token for {token_url} expired, renewing token")
 
         # Otherwise we have to retrieve it
         payload = {
@@ -177,9 +211,10 @@ class ApiUtil():
             r_json = resp.json()
             # If expires_in is a parameter on the return, add the value to "now" and store it as a new value expires_time
             if 'expires_in' in r_json:
-                expires_time = datetime.now() + timedelta(seconds=r_json['expires_in'])
+                expire_seconds = int(r_json['expires_in'])*self.token_expires_percent
+                expires_time = datetime.now() + timedelta(seconds=expire_seconds)
                 r_json['expires_time'] = expires_time
-                self.__log.info(f"The token for {client_scope} will expire at {expires_time}")
+                self.__log.info(f"The new token for {client_scope} will expire at {expires_time} after {expire_seconds} seconds")
             # Cache the token
             self.tokens[token_url] = r_json
             return r_json
