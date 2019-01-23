@@ -34,6 +34,10 @@ class TestApiCalls(unittest.TestCase):
         uniqname = "uniqname"
         self.assertEqual(self.apiutil.api_call(f"MCommunity/People/{uniqname}", "mcommunity").status_code, 200)
 
+    # Tests API mcommunity calls
+    def test_umscheduleofclasses(self):
+        self.assertEqual(self.apiutil.api_call(f"Curriculum/SOC/Terms", "umscheduleofclasses").status_code, 200)
+
     def test_token_renewal(self):
         uniqname = "uniqname"
         client_scope = "mcommunity"
@@ -45,7 +49,7 @@ class TestApiCalls(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
         # This is the message that the token was renewed
-        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {token_url} expired, renewing token', cm.output)
+        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {token_url}/{client_scope} expired, renewing token', cm.output)
         # Assert this api resulted in 200
         self.assertEqual(api_result.status_code, 200)
 

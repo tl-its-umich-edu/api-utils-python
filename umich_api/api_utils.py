@@ -169,9 +169,11 @@ class ApiUtil():
         if token_url is None:
            token_url = self.scopes.get(client_scope, {}).get("token_url")
 
-        if token_url in self.tokens:
-            self.tokens[token_url]["expires_time"] = datetime.now()
-            self.__log.info(f"Token {token_url} has been expired")
+        token_key = token_url + '/' + client_scope
+
+        if token_key in self.tokens:
+            self.tokens[token_key]["expires_time"] = datetime.now()
+            self.__log.info(f"Token {token_key} has been expired")
             return True
         return False
 
@@ -184,17 +186,20 @@ class ApiUtil():
         :type client_scope: str
         :returns Dict (from json) generated from the response containing token information
         """
-        if token_url in self.tokens:
-            cached_token = self.tokens.get(token_url)
+        
+        token_key = token_url + '/' + client_scope
+
+        if token_key in self.tokens:
+            cached_token = self.tokens.get(token_key)
             # Check expires_time, if this is valid just return the token other-wise renew it, have a fallback incase this cam't be looked up
             token_expire_time = cached_token.get("expires_time", datetime.min)
             self.__log.debug(f"Now is {datetime.now()} token expires in {token_expire_time}")
             if (datetime.now() < token_expire_time):
                 # Not expired return the token, otherwise continue on
-                self.__log.debug(f"Token for {token_url} found and valid, returning cached token")
+                self.__log.debug(f"Token for {token_key} found and valid, returning cached token")
                 return cached_token
             else:
-                self.__log.info(f"Token for {token_url} expired, renewing token")
+                self.__log.info(f"Token for {token_key} expired, renewing token")
 
         # Otherwise we have to retrieve it
         payload = {
@@ -216,7 +221,7 @@ class ApiUtil():
                 r_json['expires_time'] = expires_time
                 self.__log.info(f"The new token for {client_scope} will expire at {expires_time} after {expire_seconds} seconds")
             # Cache the token
-            self.tokens[token_url] = r_json
+            self.tokens[token_key] = r_json
             return r_json
         else:
             self.__log.warn(f"Token generation failed with code {resp.status_code}")
