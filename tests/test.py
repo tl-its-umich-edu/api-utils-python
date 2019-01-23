@@ -46,10 +46,12 @@ class TestApiCalls(unittest.TestCase):
         self.assertEqual(api_result.status_code, 200)
         # Expire the token, verify this still works by checking the debug messages
         self.assertTrue(self.apiutil.expire_token(client_scope=client_scope))
-        with self.assertLogs(level="INFO") as cm:
-            api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
-        # This is the message that the token was renewed
-        self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {token_url}/{client_scope} expired, renewing token', cm.output)
+        # This test can't run in python 2, just skip it as it's just extra protection
+        if sys.version_info >= (3, 4):
+            with self.assertLogs(level="INFO") as cm:
+                api_result = self.apiutil.api_call(f"MCommunity/People/{uniqname}", client_scope)
+            # This is the message that the token was renewed
+            self.assertIn(f'INFO:umich_api.api_utils.ApiUtil:Token for {token_url}/{client_scope} expired, renewing token', cm.output)
         # Assert this api resulted in 200
         self.assertEqual(api_result.status_code, 200)
 
