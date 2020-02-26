@@ -4,9 +4,9 @@ import logging, json, unittest, os, sys
 
 from dotenv import load_dotenv
 
-from datetime import datetime
 
-from autologging import logged, traced
+from autologging import logged
+
 
 # Add this path first so it picks up the newest changes without having to rebuild
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +37,20 @@ class TestApiCalls(unittest.TestCase):
     # Tests API mcommunity calls
     def test_umscheduleofclasses(self):
         self.assertEqual(self.apiutil.api_call(f"Curriculum/SOC/Terms", "umscheduleofclasses").status_code, 200)
+
+    # TODO replace this API with more genric placement exam api
+    def test_placement_batch_upload(self):
+        payload = {'putPlcExamScore': {'Student': [{'Form': 'S', 'ID': 'asffs', 'GradePoints': '34.4'},
+                                        {'Form': 'S', 'ID': 'rrrs', 'GradePoints': '40.4'}]}}
+
+        headers = [{"Content-Type" : "application/json"}]
+        call = self.apiutil.api_call(f"aa/SpanishPlacementScores/Scores",
+                                     "spanishplacementscores", "PUT",  json.dumps(payload), api_specific_headers=headers)
+        self.__log.info(call.text)
+        self.assertEqual(call.status_code, 200)
+        resp_body = json.loads(call.text)
+        len__ = list(resp_body['putPlcExamScoreResponse']['putPlcExamScoreResponse']['Success']).__len__()
+        self.assertEqual(2, len__)
 
     def test_token_renewal(self):
         uniqname = "uniqname"

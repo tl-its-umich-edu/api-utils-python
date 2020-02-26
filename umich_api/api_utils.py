@@ -74,11 +74,12 @@ class ApiUtil():
             # Store the token url associated with this client scope for later
             self.scopes[client_scope]["token_url"] = api.get('token_url')
 
-    def api_call(self, api_call, client_scope, method="GET", payload=None):
+    def api_call(self, api_call, client_scope, method="GET", payload=None, api_specific_headers=None):
         # type: (str, str, Dict[str, str], str, str) -> requests.Response
         """Calls the specified API with the optional method
         
-        :param api_call: API to call on this application
+        :param api_specific_headers:
+        :param api_call: certain API to call has specific header so letting application pass the headers as they need
         :type api_call: str
         :param client_scope: Client scope, must be present in the api_json file
         :type client_scope: str
@@ -92,9 +93,9 @@ class ApiUtil():
         :raises Exception: No Access Token
         """
         this_scope = self.scopes.get(client_scope)
-        return this_scope.get("api_call")(api_call, self.get_access_token(this_scope.get("token_url"), client_scope), method, payload)
+        return this_scope.get("api_call")(api_call, self.get_access_token(this_scope.get("token_url"), client_scope), method, payload, api_specific_headers)
 
-    def _api_call(self, api_call, access_token, method="GET", payload=None):
+    def _api_call(self, api_call, access_token, method="GET", payload=None, api_specific_headers=None):
         # type: (str, str, Dict[str, str], str, str) -> requests.Response
         """ Internal method for making api calls 
         """
@@ -107,6 +108,10 @@ class ApiUtil():
             "Authorization" : f"Bearer {access_token}",
             "x-ibm-client-id" : self.client_id,
         }
+        if not (api_specific_headers is None):
+            for header in api_specific_headers:
+                headers.update(header)
+
         self.__log.debug(headers)
         api_url = f"{self.base_url}/{api_call}"
 
