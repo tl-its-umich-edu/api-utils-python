@@ -4,6 +4,11 @@
         "limits_calls": 200,
         "limits_period": 60
     },
+    "mcommunitygroups": {
+        "token_url": "inst/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
+    },
     "canvasreadonly": {
         "token_url": "/aa/oauth2/token",
         "limits_calls": 20000,
@@ -21,6 +26,11 @@
     },
     "spanishplacementscores": {
         "token_url": "aa/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
+    },
+    "itaccounts": {
+        "token_url": "it/oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     }
