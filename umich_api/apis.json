@@ -10,7 +10,7 @@
         "limits_period": 60
     },
     "canvasreadonly": {
-        "token_url": "/aa/oauth2/token",
+        "token_url": "aa/oauth2/token",
         "limits_calls": 20000,
         "limits_period": 1
     },
