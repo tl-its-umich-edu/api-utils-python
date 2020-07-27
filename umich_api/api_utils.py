@@ -1,5 +1,3 @@
-install_aliases()
-
 from builtins import *
 from ratelimit import limits, sleep_and_retry
 from urllib.parse import urlparse, parse_qs
