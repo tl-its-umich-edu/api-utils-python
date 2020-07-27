@@ -1,5 +1,3 @@
-# -*- coding: future_fstrings -*- 
-
 import logging, json, unittest, os, sys
 
 from dotenv import load_dotenv

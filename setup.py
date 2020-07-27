@@ -16,9 +16,6 @@ setup(
     install_requires=[
         'ratelimit>=2.2.0,<2.2.99',
         'requests>=2.20.0,<2.22.99',
-        # For Python 2.7
-        'future',
-        'future-fstrings',
         'python-dotenv==0.9.1',
         'autologging==1.2',
     ],
