@@ -1,13 +1,3 @@
-# -*- coding: future_fstrings -*- 
-
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-
-from future.standard_library import install_aliases
-from future.utils import viewitems
-
-install_aliases()
-
 from builtins import *
 from ratelimit import limits, sleep_and_retry
 from urllib.parse import urlparse, parse_qs
@@ -69,7 +59,7 @@ class ApiUtil():
         self.tokens = defaultdict(dict)
 
         # Setup all of the calls to the apis with the limits
-        for (client_scope, api) in viewitems(apis): 
+        for (client_scope, api) in apis.items():
             self.scopes[client_scope]["api_call"] = sleep_and_retry(limits(calls=api.get('limits_calls'), period=api.get('limits_period'))(self._api_call))
             # Store the token url associated with this client scope for later
             self.scopes[client_scope]["token_url"] = api.get('token_url')
