@@ -14,10 +14,10 @@ setup(
     packages=['umich_api'],
     package_data={'umich_api': ['apis.json']},
     install_requires=[
-        'ratelimit>=2.2.0,<2.2.99',
-        'requests>=2.20.0,<2.24.99',
-        'python-dotenv>=0.9.1,<0.14.99',
         'autologging>=1.2.0,<1.3.99',
+        'python-dotenv>=0.9.1,<0.14.99',
+        'ratelimit>=2.2.0,<2.2.99',
+        'requests>=2.20.0,<2.24.99'
     ],
     setup_requires=['setuptools_scm',],
     tests_require=[],
