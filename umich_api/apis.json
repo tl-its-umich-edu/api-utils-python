@@ -24,7 +24,7 @@
         "limits_calls": 20000,
         "limits_period": 1
     },
-    "spanishplacementscores": {
+    "placementscores": {
         "token_url": "aa/oauth2/token",
         "limits_calls": 200,
         "limits_period": 60

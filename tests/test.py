@@ -36,17 +36,17 @@ class TestApiCalls(unittest.TestCase):
     def test_umscheduleofclasses(self):
         self.assertEqual(self.apiutil.api_call(f"Curriculum/SOC/Terms", "umscheduleofclasses").status_code, 200)
 
-    # TODO replace this API with more genric placement exam api
     def test_placement_batch_upload(self):
-        payload = {'putPlcExamScore': {'Student': [{'Form': 'S', 'ID': 'asffs', 'GradePoints': '34.4'},
-                                        {'Form': 'S', 'ID': 'rrrs', 'GradePoints': '40.4'}]}}
-
-        headers = [{"Content-Type" : "application/json"}]
-        call = self.apiutil.api_call(f"aa/SpanishPlacementScores/Scores",
-                                     "spanishplacementscores", "PUT",  json.dumps(payload), api_specific_headers=headers)
-        self.__log.info(call.text)
-        self.assertEqual(call.status_code, 200)
-        resp_body = json.loads(call.text)
+        payload = {'putPlcExamScore': {
+            'Student': [{'Form': 'S', 'ID': 'asffs', 'GradePoints': '34.4'}, {'Form': 'S', 'ID': 'rrrs', 'GradePoints': '40.4'}]
+        }}
+        headers = [{'Content-Type': 'application/json'}]
+        response = self.apiutil.api_call(
+            f'aa/PlacementScores/Scores', 'placementscores', 'PUT', json.dumps(payload), api_specific_headers=headers
+        )
+        self.__log.info(response.text)
+        self.assertEqual(response.status_code, 200)
+        resp_body = json.loads(response.text)
         len__ = list(resp_body['putPlcExamScoreResponse']['putPlcExamScoreResponse']['Success']).__len__()
         self.assertEqual(2, len__)
 
