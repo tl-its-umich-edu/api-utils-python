@@ -32,7 +32,14 @@ class TestApiCalls(unittest.TestCase):
         uniqname = "uniqname"
         self.assertEqual(self.apiutil.api_call(f"MCommunity/People/{uniqname}", "mcommunity").status_code, 200)
 
-    # Tests API mcommunity calls
+    def test_mcommunitygroups(self):
+        response_to_fake = self.apiutil.api_call(f'MCommunityGroups/Members/Fake Hacky Sack Club', 'mcommunitygroups')
+        self.assertEqual(response_to_fake.status_code, 200)
+        self.assertTrue(json.loads(response_to_fake.text)['MCommunityInfo'] is None)
+        response_to_real = self.apiutil.api_call(f'MCommunityGroups/Members/ITS Teaching and Learning', 'mcommunitygroups')
+        self.assertTrue(response_to_real.status_code, 200)
+        self.assertTrue(json.loads(response_to_real.text)['MCommunityInfo'] is not None)
+
     def test_umscheduleofclasses(self):
         self.assertEqual(self.apiutil.api_call(f"Curriculum/SOC/Terms", "umscheduleofclasses").status_code, 200)
 
