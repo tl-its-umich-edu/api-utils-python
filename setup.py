@@ -17,7 +17,8 @@ setup(
         'autologging>=1.2.0,<1.3.99',
         'python-dotenv>=0.9.1,<0.14.99',
         'ratelimit>=2.2.0,<2.2.99',
-        'requests>=2.20.0,<2.24.99'
+        'requests>=2.20.0,<2.26.99',
+        'urllib3>=1.21.1,<1.27'
     ],
     setup_requires=['setuptools_scm',],
     tests_require=[],
