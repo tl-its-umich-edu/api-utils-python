@@ -1,13 +1,16 @@
+import json, pkg_resources
 from builtins import *
-from ratelimit import limits, sleep_and_retry
-from urllib.parse import urlparse, parse_qs
+from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Dict, Optional
+from urllib.parse import urlparse, parse_qs
 
 from autologging import logged, traced
+from ratelimit import limits, sleep_and_retry
+from requests import Response, Session
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
-import requests, json, pkg_resources
-
-from collections import defaultdict
 
 @logged
 @traced
@@ -16,8 +19,16 @@ class ApiUtil():
         Must init with the appropriate values
     """
 
-    def __init__(self, base_url, client_id, client_secret, api_json = None, token_expires_percent=5):
-        # type: (str, str, str, str, str) -> None
+    def __init__(
+        self,
+        base_url: str,
+        client_id: str,
+        client_secret: str,
+        api_json: Optional[str] = None,
+        token_expires_percent: int = 5,
+        max_retries: int = 3
+    ):
+        # type: (str, str, str, str or None, int, int) -> None
         """[Init method used to create an Api Class for making api calls]
         
         :param base_url: Base URL of the API service
@@ -30,14 +41,34 @@ class ApiUtil():
         :type api_json: str, optional
         :param token_expires_percent: This is a percentage of time to take off the token renewal to ensure it doesn't run out. For instance 5(%) of 3600 is 180. 
         :type token_expires_percent: int, optional
+        :param max_retries: Number of times to retry calls for all issues (timeouts, 50X status codes)
+        :type max_retries: int, optional (default is 3)
         :raises Exception: If this cannot be configured with parameters used
         :raises AttributeError: If the apis.json file is empty
         """
 
-        self.base_url = base_url
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.token_expires_percent = int(100-token_expires_percent)/100
+        self.base_url: str = base_url
+        self.client_id: str = client_id
+        self.client_secret: str = client_secret
+        self.token_expires_percent: int = int(100-token_expires_percent)/100
+
+        self.session: Session = Session()
+        self.session.headers.update({ 'accept' : 'application/json' })
+        retry = Retry(
+            total=max_retries,
+            connect=max_retries,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+
+        # print('adapter introspection')
+        # adapter = self.session.get_adapter('https://')
+        # print(adapter.max_retries)
+        # print(adapter.config)
 
         # This line is needed so pylint doesn't complain about this variable not existing.
         self.__log = self.__log
@@ -54,9 +85,9 @@ class ApiUtil():
             raise AttributeError("fFile {api_file} loaded is empty")
 
         # Create a dict to hold details of scopes (from json)
-        self.scopes = defaultdict(dict)
+        self.scopes: Dict = defaultdict(dict)
         # Create a dict to cache the tokens
-        self.tokens = defaultdict(dict)
+        self.tokens: Dict = defaultdict(dict)
 
         # Setup all of the calls to the apis with the limits
         for (client_scope, api) in apis.items():
@@ -65,7 +96,7 @@ class ApiUtil():
             self.scopes[client_scope]["token_url"] = api.get('token_url')
 
     def api_call(self, api_call, client_scope, method="GET", payload=None, api_specific_headers=None):
-        # type: (str, str, Dict[str, str], str, str) -> requests.Response
+        # type: (str, str, Dict[str, str], str, str) -> Response
         """Calls the specified API with the optional method
         
         :param api_specific_headers:
@@ -86,7 +117,7 @@ class ApiUtil():
         return this_scope.get("api_call")(api_call, self.get_access_token(this_scope.get("token_url"), client_scope), method, payload, api_specific_headers)
 
     def _api_call(self, api_call, access_token, method="GET", payload=None, api_specific_headers=None):
-        # type: (str, str, Dict[str, str], str, str) -> requests.Response
+        # type: (str, str, Dict[str, str], str, str) -> Response
         """ Internal method for making api calls 
         """
 
@@ -94,7 +125,6 @@ class ApiUtil():
             raise Exception("Must obtain an access token before making API Call")
 
         headers = {
-            "accept" : "application/json",
             "Authorization" : f"Bearer {access_token}",
             "x-ibm-client-id" : self.client_id,
         }
@@ -107,17 +137,17 @@ class ApiUtil():
 
         self.__log.debug(f"Calling {api_url} with method {method}")
         if method == "GET":
-            resp = requests.get(api_url, headers=headers, params=payload)
+            resp = self.session.get(api_url, headers=headers, params=payload)
         elif method == "POST":
-            resp = requests.post(api_url, headers=headers, data=payload)
+            resp = self.session.post(api_url, headers=headers, data=payload)
         elif method == "PUT":
-            resp = requests.put(api_url, headers=headers, data=payload)
+            resp = self.session.put(api_url, headers=headers, data=payload)
         elif method == "DELETE":
-            resp = requests.delete(api_url, headers=headers)
+            resp = self.session.delete(api_url, headers=headers)
         elif method == "HEAD":
-            resp = requests.head(api_url, headers=headers)
+            resp = self.session.head(api_url, headers=headers)
         elif method == "OPTIONS":
-            resp = requests.options(api_url, headers=headers)
+            resp = self.session.options(api_url, headers=headers)
         else:
             raise Exception(f"The method {method} is unsupported")
             
@@ -129,7 +159,7 @@ class ApiUtil():
             return resp
 
     def get_next_page(self, response):
-        #type: (requests.Response) -> Dict
+        #type: (Response) -> Dict
         if not 'next' in response.links:
             return None
         self.__log.debug(response.links)
@@ -203,10 +233,7 @@ class ApiUtil():
             "client_secret" : self.client_secret,
             "scope" : client_scope,
         }
-        headers = {
-            "accept" : "application/json",
-        }
-        resp = requests.post(f"{self.base_url}/{token_url}", data=payload, headers=headers)
+        resp = self.session.post(f"{self.base_url}/{token_url}", data=payload)
         if (resp.ok):
             r_json = resp.json()
             # If expires_in is a parameter on the return, add the value to "now" and store it as a new value expires_time
@@ -222,4 +249,3 @@ class ApiUtil():
             self.__log.warn(f"Token generation failed with code {resp.status_code}")
             self.__log.debug(resp.text)
             return None
-
