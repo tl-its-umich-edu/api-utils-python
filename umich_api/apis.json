@@ -33,5 +33,15 @@
         "token_url": "it/oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
+    },
+    "person": {
+        "token_url": "inst/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
+    },
+    "classroster": {
+        "token_url": "aa/oauth2/token",
+        "limits_calls": 200,
+        "limits_period": 60
     }
 }
