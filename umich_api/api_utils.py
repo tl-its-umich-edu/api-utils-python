@@ -95,8 +95,7 @@ class ApiUtil():
 
         headers = {
             "accept" : "application/json",
-            "Authorization" : f"Bearer {access_token}",
-            "x-ibm-client-id" : self.client_id,
+            "Authorization" : f"Bearer {access_token}"
         }
         if not (api_specific_headers is None):
             for header in api_specific_headers:
