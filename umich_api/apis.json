@@ -1,36 +1,36 @@
 {
     "mcommunity": {
-        "token_url": "inst/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     },
     "mcommunitygroups": {
-        "token_url": "inst/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     },
     "canvasreadonly": {
-        "token_url": "aa/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 20000,
         "limits_period": 1
     },
     "umscheduleofclasses": {
-        "token_url": "aa/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     },
     "canvastladmin": {
-        "token_url": "aa/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 20000,
         "limits_period": 1
     },
     "placementscores": {
-        "token_url": "aa/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     },
     "itaccounts": {
-        "token_url": "it/oauth2/token",
+        "token_url": "oauth2/token",
         "limits_calls": 200,
         "limits_period": 60
     }
