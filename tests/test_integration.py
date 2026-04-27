@@ -22,6 +22,10 @@ class TestApiCalls(unittest.TestCase):
         cls.url = os.getenv("url")
         cls.client_id = os.getenv("client_id")
         cls.secret = os.getenv("secret")
+
+        if not cls.url or not cls.client_id or not cls.secret:
+            raise unittest.SkipTest("Missing required integration test environment variables: url, client_id, secret")
+
         cls.apiutil = ApiUtil(cls.url, cls.client_id, cls.secret)
         # This line is needed so pylint doesn't complain about this variable not existing.
         cls.__log = cls.__log

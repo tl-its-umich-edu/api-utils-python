@@ -1,31 +1,71 @@
-Python Umich API Utilities
+# Python Umich API Utilities
 
-This is a package of utilties to make connecting and using the University of Michigan API easier for python developers.
+Utilities to simplify connecting to and using University of Michigan APIs from Python.
 
-Current Features:
+## Features
 
-* Should support GET/POST/PUT/DELETE/HEAD/OPTIONS against any API in the directory
-* Supports auto obtaining tokens and renewing tokens if they expire in a long running application
-* Supports configuration of custom apis that are used
-* Supports adhering to user defined rate limits (should match the API)
-* Supports pagination, via get_next_page
+- Supports GET/POST/PUT/DELETE/HEAD/OPTIONS calls against APIs defined in the directory.
+- Automatically obtains and renews OAuth tokens for long-running applications.
+- Supports custom API configuration.
+- Applies configured rate limits per API scope.
+- Supports pagination via `get_next_page`.
 
-Future Ideas:
-* Automatic rate detection from the API
-* Define more apis
-* Implement caching
-* Implement better pagination
+## Installation
 
-You can install this locally with 
-`pip install .`
+Install locally:
 
-You can use this in your DockerFile with (The most current version is 1.3)
-`pip install git+https://github.com/tl-its-umich-edu/api-utils-python@v1.3`
+```bash
+pip install .
+```
 
-And I believe also via requirements file this similar way just with the -e flag.
+Install with test dependencies:
 
-If this is widely used and there is a need we can release to pypi but it's seems pretty specific for Michigan. 
+```bash
+pip install -e '.[test]'
+```
 
-See the issues tab for any known issue, please file and issues found and pull requests are accepted! 
+Install from GitHub tag (example):
 
-The tests directory contains a sample script. You'll need to copy the .env.sample .env and edit the files to point to the correct UM API to run the test code but it's basic usage of how you should be able to call any API in the directory. 
+```bash
+pip install git+https://github.com/tl-its-umich-edu/api-utils-python@v4.0.0
+```
+
+## Testing
+
+Run local mocked tests (no external services required):
+
+```bash
+pytest
+```
+
+Run integration tests (real service calls):
+
+1. Copy `tests/.env.sample` to `tests/.env`.
+2. Fill in `url`, `client_id`, and `secret`.
+3. Run:
+
+```bash
+pytest tests/test_integration.py
+```
+
+Integration tests are skipped automatically when required credentials are missing.
+
+Run the Docker multi-version matrix (slim images):
+
+```bash
+bash ./docker-tests3.sh
+```
+
+This runs tests against Python 3.11, 3.12, 3.13, and 3.14.
+
+## Notes
+
+- This package is currently distributed through the repository (not published on PyPI).
+- Please use GitHub issues for bugs and feature requests; pull requests are welcome.
+
+## Future Ideas
+
+- Automatic rate detection from API responses.
+- Additional predefined APIs.
+- Caching support.
+- Improved pagination ergonomics.
