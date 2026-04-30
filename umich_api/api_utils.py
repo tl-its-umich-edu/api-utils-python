@@ -45,10 +45,11 @@ class ApiUtil():
 
         # If the user doesn't pass an alternate API file use the included one
         if not api_json:
-            api_json = str(resources.files("umich_api").joinpath("apis.json"))
-
-        with open(api_json, encoding='utf-8') as api_file:
-            apis = json.loads(api_file.read())
+            with resources.files("umich_api").joinpath("apis.json").open(encoding='utf-8') as api_file:
+                apis = json.loads(api_file.read())
+        else:
+            with open(api_json, encoding='utf-8') as api_file:
+                apis = json.loads(api_file.read())
         
         # If the string is empty
         if not apis:
