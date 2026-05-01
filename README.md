@@ -53,10 +53,13 @@ Integration tests are skipped automatically when required credentials are missin
 Run the Docker multi-version matrix (slim images):
 
 ```bash
-bash ./docker-tests3.sh
+bash ./docker-tests3.sh          # quiet output, all versions
+bash ./docker-tests3.sh -v       # verbose (shows each test name), all versions
+bash ./docker-tests3.sh 3.13     # quiet, single version
+bash ./docker-tests3.sh -v 3.13  # verbose, single version
 ```
 
-This runs tests against Python 3.11, 3.12, 3.13, and 3.14.
+This runs tests against Python 3.11, 3.12, 3.13, and 3.14. Full pip install output is always suppressed; test output streams directly to the terminal.
 
 ## Notes
 
