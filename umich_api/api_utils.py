@@ -2,10 +2,11 @@ from builtins import *
 from ratelimit import limits, sleep_and_retry
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timedelta
+from importlib import resources
 
 from autologging import logged, traced
 
-import requests, json, pkg_resources
+import requests, json
 
 from collections import defaultdict
 
@@ -44,10 +45,11 @@ class ApiUtil():
 
         # If the user doesn't pass an alternate API file use the included one
         if not api_json:
-            api_json = pkg_resources.resource_filename(__name__, 'apis.json')
-
-        with open(api_json, encoding='utf-8') as api_file:
-            apis = json.loads(api_file.read())
+            with resources.files("umich_api").joinpath("apis.json").open(encoding='utf-8') as api_file:
+                apis = json.loads(api_file.read())
+        else:
+            with open(api_json, encoding='utf-8') as api_file:
+                apis = json.loads(api_file.read())
         
         # If the string is empty
         if not apis:
@@ -218,7 +220,7 @@ class ApiUtil():
             self.tokens[token_key] = r_json
             return r_json
         else:
-            self.__log.warn(f"Token generation failed with code {resp.status_code}")
+            self.__log.warning(f"Token generation failed with code {resp.status_code}")
             self.__log.debug(resp.text)
             return None
 

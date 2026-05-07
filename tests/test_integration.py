@@ -22,6 +22,10 @@ class TestApiCalls(unittest.TestCase):
         cls.url = os.getenv("url")
         cls.client_id = os.getenv("client_id")
         cls.secret = os.getenv("secret")
+
+        if not cls.url or not cls.client_id or not cls.secret:
+            raise unittest.SkipTest("Missing required integration test environment variables: url, client_id, secret")
+
         cls.apiutil = ApiUtil(cls.url, cls.client_id, cls.secret)
         # This line is needed so pylint doesn't complain about this variable not existing.
         cls.__log = cls.__log
@@ -76,14 +80,14 @@ class TestApiCalls(unittest.TestCase):
     def test_pagination(self):
         # Try a course site that has no next page
         resp = self.apiutil.api_call(f"aa/CanvasReadOnly/courses/1/users",'canvasreadonly')
-        next = self.apiutil.get_next_page(resp)
-        self.assertEqual(next,None)
+        next_page = self.apiutil.get_next_page(resp)
+        self.assertEqual(next_page,None)
 
         #Now try one that does have a next page
         resp = self.apiutil.api_call(f"aa/CanvasReadOnly/courses/245665/users",'canvasreadonly')
-        next = self.apiutil.get_next_page(resp)
+        next_page = self.apiutil.get_next_page(resp)
         self.assertEqual(self.apiutil.get_next_page(resp),{'page': ['2'], 'per_page': ['10']})
-        resp = self.apiutil.api_call(f"aa/CanvasReadOnly/courses/245664/users",'canvasreadonly', payload=next)
+        resp = self.apiutil.api_call(f"aa/CanvasReadOnly/courses/245664/users",'canvasreadonly', payload=next_page)
         self.__log.debug(resp)
         
     # Tests API canvasreadonly calls
