@@ -9,6 +9,7 @@ from autologging import logged, traced
 import requests, json
 
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Union
 
 @logged
 @traced
@@ -67,7 +68,7 @@ class ApiUtil():
             self.scopes[client_scope]["token_url"] = api.get('token_url')
 
     def api_call(self, api_call, client_scope, method="GET", payload=None, api_specific_headers=None):
-        # type: (str, str, Dict[str, str], str, str) -> requests.Response
+        # type: (str, str, str, Optional[Union[str, Dict[str, Any]]], Optional[List[Dict[str, str]]]) -> requests.Response
         """Calls the specified API with the optional method
         
         :param api_specific_headers:
@@ -88,7 +89,7 @@ class ApiUtil():
         return this_scope.get("api_call")(api_call, self.get_access_token(this_scope.get("token_url"), client_scope), method, payload, api_specific_headers)
 
     def _api_call(self, api_call, access_token, method="GET", payload=None, api_specific_headers=None):
-        # type: (str, str, Dict[str, str], str, str) -> requests.Response
+        # type: (str, str, str, Optional[Union[str, Dict[str, Any]]], Optional[List[Dict[str, str]]]) -> requests.Response
         """ Internal method for making api calls 
         """
 
